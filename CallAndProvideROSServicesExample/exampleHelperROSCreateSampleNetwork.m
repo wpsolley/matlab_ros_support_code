@@ -46,10 +46,8 @@ scanSub2 = ros.Subscriber(node_2,'/scan','sensor_msgs/LaserScan','DataFormat','s
 %% Services
 
 % Create two service servers for the '/add' and '/reply' services
-srv1 = ros.ServiceServer(node_3,'/add','roscpp_tutorials/TwoInts',...
-    'DataFormat','struct');
-srv2 = ros.ServiceServer(node_3,'/reply','std_srvs/Empty',...
-    @exampleHelperROSEmptyCallback,'DataFormat','struct');
+srv1 = ros.ServiceServer(node_3,'/add','roscpp_tutorials/TwoInts','DataFormat','struct');
+srv2 = ros.ServiceServer(node_3,'/reply','std_srvs/Empty',@exampleHelperROSEmptyCallback,'DataFormat','struct');
 
 %% TF
 % Load sample data for inspecting messages
@@ -63,6 +61,14 @@ timerHandles.twistPub = twistPub;
 timerHandles.twistPubmsg = twistPubmsg;
 timerHandles.scanPub = scanPub;
 timerHandles.scanPubmsg = messageData.scan;
-simTimer = ExampleHelperROSTimer(0.1, {@exampleHelperROSSimTimer,timerHandles});
+
+% This next line is complicated. It does two things:
+% 1. First the @exampleHelperROSSimTimer is a function that will run first.
+%    This function will populate the messages with data for pose. 
+% 2. The ExampleHelperROSTimer will run the @exampleHelperROSSimTimer every 0.1 secs. 
+%
+% The overall effect is that the pose will change over time.
+simTimer = ExampleHelperROSTimer(0.1, ... % How frequenctly should I publish? i.e. 10Hz
+                                {@exampleHelperROSSimTimer,timerHandles}); % exampleHelperROSSimTimer is a program that populates the pose message. Takes in timerHandles
 
 clear messageData
