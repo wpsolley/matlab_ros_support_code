@@ -1,7 +1,12 @@
-classdef ExampleHelperROSTimer < handle
-    %ExampleHelperROSTimer Encapsulates a periodic timer object for the ROS examples
-    %   This class ensures that the timer is properly deleted when its
-    %   object goes out-of-scope or is cleared from the workspace.
+classdef ExampleHelperROSTimer < handle 
+    % Define class ExampleHelperROSTimer that inherits from handle class. 
+    % handle class allows reference behavior. 
+    % Changes to object persist outside the function.
+    %
+    % ExampleHelperROSTimer 
+    % Encapsulates a periodic timer object for the ROS examples
+    % This class ensures that the timer is properly deleted when its
+    % object goes out-of-scope or is cleared from the workspace.
     %
     %   t = ExampleHelperROSTimer(PERIOD, TIMERFCN) creates a timer object
     %   and sets its execution rate to PERIOD (in seconds). TIMERFCN will
