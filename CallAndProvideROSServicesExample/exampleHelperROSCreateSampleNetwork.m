@@ -1,74 +1,82 @@
-%exampleHelperROSCreateSampleNetwork Create an example ROS network
-%   This network is representative of a realistic ROS network and is used 
-%   throughout the MATLAB ROS examples. It features three nodes,
-%   two publishers, three subscribers, and two services. Additionally we use a
-%   timer to control publishing of ROS messages over the network.
+%exampleHelperROSCreateSampleNetwork 
+%   Example of a ROS network. Features 2 nodes, 2 publishers, 3 subscribers, 
+%   and two services. 
 %
-%   See also exampleHelperROSShutDownSampleNetwork, exampleHelperROSSimTimer,
-%   exampleHelperROSLoadRanges
-
+%   Additionally we use a timer to control publishing of ROS messages over the network.
+%   Modified by Dr. Juan Rojas, 2024Feb. 
 %   Copyright 2014-2021 The MathWorks, Inc.
 
-% Initialize three nodes (in addition to the global MATLAB node that is 
-% created through rosinit). Note that the nodes will try to connect to the
-% ROS master at 'localhost'. If you are connecting to an external master,
-% you will have to use its IP address or hostname.
+% Initialize 3 nodes at ROS master at 'localhost'. 
+% If you want to connect to an external master, use that IP address.
 masterHost = 'localhost';
+
 node_1 = ros.Node('node_1'); % If masterHost is localHost no need to add
 node_2 = ros.Node('node_2', masterHost);
 node_3 = ros.Node('node_3', masterHost);
 
+%% Load Saved Data: scan  & TF
 % Example data from pre-existing messages
 messageData = load('specialROSMessageData.mat','scan','tf');
 
-%% Pose: 
-% Create a publisher and subscriber for the '/pose' topic
+%% Pose and Scan Publishers  
 
-% A.1. Node 1 Publisher
+%% Pose 
+% A. Node 1 publisher object for the '/pose' topic 
+
+% A.1. Node 1 Publisher (data not yet published to network, later with send() ).
 twistPub = ros.Publisher(node_1,'/pose','geometry_msgs/Twist','DataFormat','struct');
 
-% A.2. Every publisher will need to have messages to send
+% A.2. Create a variable of type of geometry_msgs/Twist (will be populated later)
 twistPubmsg = rosmessage(twistPub);
 
-% B.1 Node 1 Subscriber: this node is designed to receive info from node1
-twistSub = ros.Subscriber(node_2,'/pose','geometry_msgs/Twist','DataFormat','struct');
-
 %% Scan
-% Create publishers and subscribers for the '/scan' topic
+% Create publisher and subscriber objects for the '/scan' topic (data not yet published to network, later with send() ).
 
-% C.1. Node 3 Publisher
-scanPub = ros.Publisher(node_3,'/scan','sensor_msgs/LaserScan','DataFormat','struct');
+% B.1. Node 3 Publisher (data not yet published to network, later with send() ).
+scanPub = ros.Publisher(node_2,'/scan','sensor_msgs/LaserScan','DataFormat','struct'); 
 
-% D.1 2 nodes will subscribe
-scanSub1 = ros.Subscriber(node_1,'/scan','sensor_msgs/LaserScan','DataFormat','struct');
-scanSub2 = ros.Subscriber(node_2,'/scan','sensor_msgs/LaserScan','DataFormat','struct');
+% B.2. Create a variable of type of geometry_msgs/Twist (will be populated later)
+% scanPubmsg = messageData.scan; % Not used since in this example no data is actually going to be created
 
-%% Services
+%% Subscribers
 
-% Create two service servers for the '/add' and '/reply' services
-srv1 = ros.ServiceServer(node_3,'/add','roscpp_tutorials/TwoInts','DataFormat','struct');
-srv2 = ros.ServiceServer(node_3,'/reply','std_srvs/Empty',@exampleHelperROSEmptyCallback,'DataFormat','struct');
+% C.1 Node 3 Subscriber to pose
+twistSub = ros.Subscriber(node_3,'/pose','geometry_msgs/Twist','DataFormat','struct', 'BufferSize', 10); % Buffer size helps to accumulate msgs if publisher faster than subsriber, default value is 1
 
-%% TF
-% Load sample data for inspecting messages
-tf = messageData.tf;
+% D.1 1 nodes will subscribe
+scanSub1 = ros.Subscriber(node_3,'/scan','sensor_msgs/LaserScan','DataFormat','struct');
 
-%% Timers
+% Learn  more about the sensor_msgs/Laser scan message on ROS website documentation: 
+% https://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/LaserScan.html
 
-% Create a timer for publishing messages and assign appropriate handles
-% The timer will call exampleHelperROSSimTimer at a rate of 10 Hz.
+%% Sending the DATA
+
+% In this section we will be doing 2 big things:
+% 1. Update data for twistPub and scanPub
+% 2. Repeatedely send out data at a particular rate (i.e. 10Hz).
+%    Data will change each time it is sent out.
+
+% To accomplish this, we will use a function called ExampleHelperROSTimer.
+% This method takes 2 arguments: (i) rate and (ii) data. 
+%
+% We will integrate all data (i.e. publisher objects and message data) into 1 structure timeHandles
+%   - Populate data and send inside exampleHelperROSSimTimer
+%   - Call it at 10Hz via ExampleHelperROSTimer
+%
+% Create a structure timerHandles that will combine publisher objects and messages into one structure. 
+%
+% Publisher Objects
 timerHandles.twistPub = twistPub;
-timerHandles.twistPubmsg = twistPubmsg;
 timerHandles.scanPub = scanPub;
+
+% Messages
+timerHandles.twistPubmsg = twistPubmsg;
 timerHandles.scanPubmsg = messageData.scan;
 
-% This next line is complicated. It does two things:
-% 1. First the @exampleHelperROSSimTimer is a function that will run first.
-%    This function will populate the messages with data for pose. 
-% 2. The ExampleHelperROSTimer will run the @exampleHelperROSSimTimer every 0.1 secs. 
-%
-% The overall effect is that the pose will change over time.
-simTimer = ExampleHelperROSTimer(0.1, ... % How frequenctly should I publish? i.e. 10Hz
-                                {@exampleHelperROSSimTimer,timerHandles}); % exampleHelperROSSimTimer is a program that populates the pose message. Takes in timerHandles
+% 
+simTimer = ExampleHelperROSTimer(0.1, ...                                   % How frequenctly should I publish? i.e. 10Hz
+                                {@exampleHelperROSSimTimer,timerHandles});  % exampleHelperROSSimTimer is a program that populates the pose message. Takes in timerHandles
 
+%   Loop will run ENDLESSLY (like a forever loop) changing data over time.
+%   Only ends when you press ctrl+c. At which time clear memory
 clear messageData
