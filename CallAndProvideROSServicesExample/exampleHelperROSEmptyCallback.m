@@ -7,6 +7,10 @@ function resp = exampleHelperROSEmptyCallback(~,~,resp)
 
 %   Copyright 2014-2015 The MathWorks, Inc.
 
-disp('A service client is calling');
-
+disp(newline)
+disp('-------------------------------------------------------------------')
+disp('Service Server is running.');
+disp('ROS Service client issued a call');
+disp('Would normally process input resp and produce a useful output again in resp')
+disp('-------------------------------------------------------------------')
 end
