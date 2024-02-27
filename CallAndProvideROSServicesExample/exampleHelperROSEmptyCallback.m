@@ -1,4 +1,4 @@
-function resp = exampleHelperROSEmptyCallback(~,~,resp)
+function resp = exampleHelperROSEmptyCallback(~,~,resp,userData)
 %exampleHelperROSEmptyCallback Callback function used by a ROS service server
 %   exampleHelperROSEmptyCallback(~,~,RESP) returns no arguments. it simply
 %   displays a message indicating that it has been called.
@@ -6,7 +6,7 @@ function resp = exampleHelperROSEmptyCallback(~,~,resp)
 %   See also ROSServicesExample, exampleHelperROSCreateSampleNetwork.
 
 %   Copyright 2014-2015 The MathWorks, Inc.
-
+userData
 disp(newline)
 disp('-------------------------------------------------------------------')
 disp('Service Server is running.');
