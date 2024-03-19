@@ -1,4 +1,4 @@
-function [mat_cur_q,robot_joint_names] = ros2matlabJoints(ros_cur_jnt_state_msg)
+function [ros_cur_q] = mat2rosJoints(mat_cur_q)
 %--------------------------------------------------------------------------
 % ros2matlabJoints
 % Takes a joint state message, extracts names and joint angles and
@@ -13,22 +13,22 @@ function [mat_cur_q,robot_joint_names] = ros2matlabJoints(ros_cur_jnt_state_msg)
 %--------------------------------------------------------------------------
 
 %% Local Variables
-qi = zeros(1,6);            % array of indeces
-mat_cur_q = zeros(1,6);     % array of joint angles
+% qi = zeros(1,6);            % array of indeces
+% mat_cur_q = zeros(1,6);     % array of joint angles
 
 
 %% Extract the latest current joint angle values and joint names
- ros_cur_q = ros_cur_jnt_state_msg.Position;
- robot_joint_names = ros_cur_jnt_state_msg.Name;
+ % ros_cur_q = ros_cur_jnt_state_msg.Position;
+ % robot_joint_names = ros_cur_jnt_state_msg.Name;
 
- %% Create a UR5e Dictionary where keys are joint naves and values is the index order
- ur5e = dictionary(robot_joint_names{1},3,... % elbow
-                   robot_joint_names{2},7,... % knuckle
-                   robot_joint_names{3},2,... % lift
-                   robot_joint_names{4},1,... % pan
-                   robot_joint_names{5},4,... % w1
-                   robot_joint_names{6},5,... % w2 
-                   robot_joint_names{7},6);   % w3
+ % %% Create a UR5e Dictionary where keys are joint naves and values is the index order
+ % ur5e = dictionary(robot_joint_names{1},3,... % elbow
+ %                   robot_joint_names{2},7,... % knuckle
+ %                   robot_joint_names{3},2,... % lift
+ %                   robot_joint_names{4},1,... % pan
+ %                   robot_joint_names{5},4,... % w1
+ %                   robot_joint_names{6},5,... % w2 
+ %                   robot_joint_names{7},6);   % w3
 
 %% Fill joint angles correctly"
 for i = 1:ur5e.numEntries
@@ -39,7 +39,10 @@ for i = 1:ur5e.numEntries
         qi(i) =  ur5e( ros_cur_jnt_state_msg.Name{i} ); % Name is a cell
 
         % Set the value of ros_cur_q(i) in the appropriate mat_cur_q entry set by qi(i)
-        mat_cur_q( qi(i) ) = ros_cur_q( i );
+        ros_cur_q( qi(i) ) = mat_cur_q( i );
     end    
+end
+ros_cur_q = [mat_cur_q(3).JointPosition configSoln(2).JointPosition configSoln(1).JointPosition...
+    configSoln(4).JointPosition configSoln(5).JointPosition configSoln(6).JointPosition
 end
 

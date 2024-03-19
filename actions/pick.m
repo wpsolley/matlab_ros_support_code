@@ -1,5 +1,19 @@
 function ret = pick(model_pose)
-
+    %----------------------------------------------------------------------
+    % pick 
+    % Top-level function to executed a complete pick. 
+    % 
+    % 01 Get Goal and Current Pose
+    % 02 
+    %
+    % Inputs
+    % model_pose (gazebo_msgs/GetModelStateResponse): contains Pose/Twist
+    % info on desired model
+    %
+    % Outputs:
+    % ret (bool): indicates whether pick succeeded or not. 
+    %----------------------------------------------------------------------
+    
     %% Local variables
     traj_steps          = 10;   % Num of traj steps
     traj_duration       = 2;    % Traj duration (secs)
@@ -11,24 +25,14 @@ function ret = pick(model_pose)
     % Convert model_pose to matlab formats.
     mat_obj_pose = ros2matlabPose(model_pose);
     
-    % 1b. Current Robot Pose in Cartesian Format (if TF does not work, change strategy to joint angles).
-    tftree = rostf('DataFormat','struct');
+    % 1b. Current Robot Pose in Cartesian Format:
+    tftree = rostf('DataFormat','struct'); % tftree.AvailableFrames  will show poses for all frames
 
-    % With this tftree object, you can see all available frames in the network:
-    % tftree.AvailableFrames
-
-
-
-    % Finally, we can get the transform we desire by calling getTransform along inputs:
+    % Get gripper_tip_link pose wrt to base via getTransform(tftree,targetframe,sourceframe):
     %   tftree object
-    %   targetgrame: this is your reference frame
+    %   targetframe: this is your reference frame
     %   sourceframe: 
-    current_pose = getTransform(tftree,'base','gripper_tip_link',rostime('now'), 'Timeout', 2);
-
-
-    % This tform will contain the translation and rotation. 
-    % t=current_pose.Transform.Translation
-    % R=current_pose.Transform.Rotation
+    current_pose = getTransform(tftree,'base','gripper_tip_link',rostime('now'), 'Timeout', 5);
 
     % Convert to matlab format
     mat_cur_pose = ros2matlabPose(current_pose);
@@ -42,7 +46,8 @@ function ret = pick(model_pose)
     %% 4. Create action client, message, populate ROS trajectory goal and send
     % Instantiate the 
     pick_traj_act_client = rosactionclient('/pos_joint_traj_controller/follow_joint_trajectory',...
-                                           'control_msgs/FollowJointTrajectory');
+                                           'control_msgs/FollowJointTrajectory', ...
+                                           'DataFormat', 'struct');
     
     % Create action goal message from client
     traj_goal = rosmessage(pick_traj_act_client); 

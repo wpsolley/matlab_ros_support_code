@@ -1,4 +1,4 @@
-function mat_joint_traj = convertPoseTraj2JointTraj(mat_traj)
+function [mat_joint_traj,robot_joint_names] = convertPoseTraj2JointTraj(mat_traj)
 
     %-------------------------------------------------------------
     % Compute IKs for Cartesian trajectory. Will need to:
@@ -12,9 +12,10 @@ function mat_joint_traj = convertPoseTraj2JointTraj(mat_traj)
     
     %1. Size in terms 4x4xn
     traj_sz = size(mat_traj);
+    num_traj_points = traj_sz(1,3);
     
-    % Create trajectory of joint angles as a row matrix of 6 joint angles for the UR5e
-    mat_joint_traj = size(traj_sz(1,3),6);
+    % Create trajectory of joint angles as a row matrix (m x 6) where, we have m waypoints by 6 joint angles for the UR5e
+    mat_joint_traj = zeros(num_traj_points,6);
     
     %2. Create UR5
     UR5e = loadrobot('universalUR5e', DataFormat="row");
@@ -35,19 +36,17 @@ function mat_joint_traj = convertPoseTraj2JointTraj(mat_traj)
     ros_cur_jnt_state_msg = receive(joint_state_sub,3);
    
     % Reorder from ROS format to Matlab format, need names.
-    % Create ur5e names in cell structure equal to the type in ROS
-    ur5e_joint_names = {'shoulder_pan_joint','shoulder_lift_joint','elbow_joint','wrist_1_joint','wrist_2_joint','wrist_3_joint','robotiq_85_left_knuckle_joint'}; % TODO: can we automate the extraction of these names
-    mat_cur_q = ros2matlabJoints(ros_cur_jnt_state_msg,ur5e_joint_names);
-    
-    
+    [mat_cur_q,robot_joint_names] = ros2matlabJoints(ros_cur_jnt_state_msg);
+        
     % Go through trajectory loop
     % Check for time complexity. Can we improve efficiency.
-    for i = 1:traj_sz(1,3)
+    for i = 1:num_traj_points
         [des_q, solnInfo] = ik('tool0',mat_traj(:,:,i),ikWeights,mat_cur_q); % Should we update initial guess with the latest q_traj value?
         
         % Set the column of q's to the row
         %q_sz = size(des_q);
         mat_joint_traj(i,:) = des_q(1,:);
     end
+% Debug disp(mat_joint_traj)
 end
 
