@@ -1,8 +1,10 @@
-function trajGoal = convert2ROSPointVec(mat_joint_traj, robot_joint_names, traj_steps, traj_duration, traj_goal)
+function traj_goal = convert2ROSPointVec(mat_joint_traj, robot_joint_names, traj_steps, traj_duration, traj_goal)
 %--------------------------------------------------------------------------
 % convert2ROSPointVec
 % Converts all of the matlab joint trajectory values into a vector of ROS
 % Trajectory Points. 
+% 
+% Make sure all messages have the same DataFormat (i.e. struct)
 %
 % Inputs:
 % mat_joint_traj (n x q) - matrix of n trajectory points for q joint values
@@ -14,33 +16,35 @@ function trajGoal = convert2ROSPointVec(mat_joint_traj, robot_joint_names, traj_
 % Outputs
 % vector of TrajectoryPoints (1 x n)
 %--------------------------------------------------------------------------
-  
-    numPoints = size(jointWaypoints,1);
-    timeStep = traj_duration / numPoints;
+    % Compute timeStep
+    timeStep = traj_duration / traj_steps;
     
-    trajGoal.Trajectory.JointNames = robot_joint_names;
+
+    traj_goal.Trajectory.JointNames = robot_joint_names;
     
-    %% Set Tolerances
+    %% Set Tolerances for each Joint
     % Create Tolerance Message
-    trajGoal.GoalTolerance(idx) = rosmessage('control_msgs/JointTolerance');
-
+    traj_goal.GoalTolerance = rosmessage('control_msgs/JointTolerance', 'DataFormat','struct');
+    
+    for idx = 1:length(robot_joint_names)
     % Populate
-    trajGoal.GoalTolerance(idx).Name = trajGoal.Trajectory.JointNames{idx};
-    trajGoal.GoalTolerance(idx).Position = 0;
-    trajGoal.GoalTolerance(idx).Velocity = 0;
-    trajGoal.GoalTolerance(idx).Acceleration = 0;
-
+        traj_goal.GoalTolerance(idx).Name = traj_goal.Trajectory.JointNames{idx};
+        traj_goal.GoalTolerance(idx).Position = 0;
+        traj_goal.GoalTolerance(idx).Velocity = 0;
+        traj_goal.GoalTolerance(idx).Acceleration = 0;
+    end
+    
     %% Set Points
 
     % Set an array of cells
-    points = cell(1,numPoints);
+    points = cell(1,traj_steps);
 
     % Create Point message
-    point = rosmessage('trajectory_msgs/JointTrajectoryPoint');
+    point = rosmessage('trajectory_msgs/JointTrajectoryPoint', 'DataFormat','struct');
 
-    for i = 1:numPoints
+    for i = 1:traj_steps
 
-        % Extract each waypoint
+        % Extract each waypoint and set it as a 1x6
 	    point.Positions     = mat2rosJoints( mat_joint_traj(i, :) );    
 
         % Set time with format as structure
@@ -50,5 +54,5 @@ function trajGoal = convert2ROSPointVec(mat_joint_traj, robot_joint_names, traj_
         points{i} = point;   
     end
     
-    trajGoal.Trajectory.Points = [ points{:} ];
+    traj_goal.Trajectory.Points = [ points{:} ];
 end
