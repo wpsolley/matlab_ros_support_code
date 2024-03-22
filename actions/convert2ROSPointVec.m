@@ -48,8 +48,12 @@ function traj_goal = convert2ROSPointVec(mat_joint_traj, robot_joint_names, traj
 	    point.Positions     = mat2rosJoints( mat_joint_traj(i, :) )';    
 
         % Set time with format as structure
-	    point.TimeFromStart = rosduration( (i-1) * timeStep, 'DataFormat','struct');    
-	    
+        if traj_steps == 1
+            point.TimeFromStart = rosduration(1,'DataFormat','struct');
+        else
+	        point.TimeFromStart = rosduration( (i-1) * timeStep, 'DataFormat','struct');    
+        end
+        
         % Set inside points cell
         points{i} = point;   
     end

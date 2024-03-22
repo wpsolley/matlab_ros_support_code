@@ -1,4 +1,4 @@
-function ret = pick(model_pose)
+function ret = pick(robot_pose, model_pose)
     %----------------------------------------------------------------------
     % pick 
     % Top-level function to executed a complete pick. 
@@ -7,6 +7,7 @@ function ret = pick(model_pose)
     % 02 
     %
     % Inputs
+    % robot_pose  (gazebo_msgs/GetModelStateResponse): contains Pose/Twist
     % model_pose (gazebo_msgs/GetModelStateResponse): contains Pose/Twist
     % info on desired model
     %
@@ -16,25 +17,31 @@ function ret = pick(model_pose)
     
     %% Local variables
     debug               = 1;     % If set to true visualize traj before running  
-    traj_steps          = 20;    % Num of traj steps
-    traj_duration       = 10;    % Traj duration (secs)
+    traj_steps          = 2;    % Num of traj steps
+    traj_duration       = 2;    % Traj duration (secs)
     tf_listening_time   = 10;    % Time (secs) to listen for transformation in ros
     
     %% 1. Get Goal|Current Pose 
     % Pick will create a cartesian trajectory from current configuration to the pose of the model. 
     
-    % Convert model_pose to matlab formats (adjust the orientation of the gripper here)
-    mat_obj_pose = ros2matlabPose(model_pose);
+    % Convert model_pose to matlab formats wrt robot (adjust the orientation of the gripper here)
+    mat_W_T_R = ros2matlabPose(robot_pose);
+    mat_W_T_M = ros2matlabPose(model_pose);
+
+    % Change reference frame to be wrt to robot
+    mat_R_T_M = inv(mat_W_T_R)*mat_W_T_M; 
+
+    % Change reference fram to be from Gazebo to Rviz
+    Rviz_T_Gazebo = rotz(pi);
+    mat_R_T_M(1:3,4) = Rviz_T_Gazebo * mat_R_T_M(1:3,4);
 
     % Modify orientation of robot pose to be  a top-down pick
-    %mat_obj_pose(1:3,1:3) = rpy2r(0, pi/2, pi/2);
-    mat_obj_pose(1:3,1:3) = eul2r([-pi/2 -pi 0]);
-    height_of_table = 0.56;
-    mat_obj_pose(3,4) = mat_obj_pose(3,4) - height_of_table;
-    
+    %mat_R_T_M(1:3,1:3) = rpy2r(0, pi/2, pi/2);
+    %mat_R_T_M(1:3,1:3) = eul2r([-pi/2 -pi 0]);
+
     % 1b. Current Robot Pose in Cartesian Format:
     tftree = rostf('DataFormat','struct'); % tftree.AvailableFrames  will show poses for all frames
-    tftree.BufferTime = tf_listening_time;
+    %tftree.BufferTime = tf_listening_time;
 
     % Get gripper_tip_link pose wrt tzo base via getTransform(tftree,targetframe,sourceframe):
     %   tftree object
@@ -44,17 +51,24 @@ function ret = pick(model_pose)
         current_pose = getTransform(tftree,'base','gripper_tip_link', rostime('now'), 'Timeout', tf_listening_time);
     catch
         % Try again: did not manage to compute the transformation 
-        current_pose = getTransform(tftree,'base','gripper_tip_link', rostime('now'), 'Timeout', tf_listening_time*2);
+        current_pose = getTransform(tftree,'base','gripper_tip_link', rostime('now'), 'Timeout', tf_listening_time);
     end
 
-    % Convert to matlab format 
-    mat_cur_pose = ros2matlabPose(current_pose);
+    % Convert gripper pose to matlab format in rviz frame
+    mat_R_T_G = ros2matlabPose(current_pose);
+    mat_R_T_M(1:3,1:3) = mat_R_T_G(1:3,1:3); % Set pick coord frame same as grip startinga
+    % Debug
+    % Corroborate gripper_tip_link_pose by computing FKs with current joint
+    % angles
+    ur5e = loadrobot("universalUR5e",DataFormat="row");
+    % mat_R_T_G_FK = ur5e.getTransform(deg2rad([30 40]),"link3")
+    % Add tool transform...
 
     %% 2. Call ctraj.
-    mat_traj = ctraj(mat_cur_pose,mat_obj_pose,traj_steps);
+    %mat_traj = ctraj(mat_R_T_G,mat_R_T_M,traj_steps); % Currently unstable due to first ik transformation of joints. Just do one point.
+    mat_traj = mat_R_T_M;
     
     %% 3. Convert to joint angles via IKs
-    ur5e = loadrobot("universalUR5e",DataFormat="row");
     [mat_joint_traj,rob_joint_names] = convertPoseTraj2JointTraj(ur5e,mat_traj);
 
     %% Visualize trajectory

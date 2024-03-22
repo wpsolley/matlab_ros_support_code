@@ -31,12 +31,12 @@ function gripGoal=packGripGoal(pos,gripGoal)
 
     % 2. Set Goal Tolerance: set type, name, and pos/vel/acc tolerance
     % Note: tolerances are considered as: waypoint +/- tolerance
-    gripGoal.GoalTolerance = rosmessage('control_msgs/JointTolerance','DataFormat', 'struct');
-
-    gripGoal.GoalTolerance.Name         = gripGoal.Trajectory.JointNames{1};
-    gripGoal.GoalTolerance.Position     = 0;
-    gripGoal.GoalTolerance.Velocity     = 0.1;
-    gripGoal.GoalTolerance.Acceleration = 0.1;
+    % gripGoal.GoalTolerance = rosmessage('control_msgs/JointTolerance','DataFormat', 'struct');
+    % 
+    % gripGoal.GoalTolerance.Name         = gripGoal.Trajectory.JointNames{1};
+    % gripGoal.GoalTolerance.Position     = 0;
+    % gripGoal.GoalTolerance.Velocity     = 0.1;
+    % gripGoal.GoalTolerance.Acceleration = 0.1;
     
     %3. Create a trajectory_msgs/JointTrajectoryPoint. Copy TimeFromSTart
     % and Positions in here along with vel/acc/effort. Finally copy this
