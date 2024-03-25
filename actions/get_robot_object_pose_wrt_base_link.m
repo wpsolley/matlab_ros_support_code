@@ -13,29 +13,29 @@ function [mat_R_T_G, mat_R_T_M] = get_robot_object_pose_wrt_base_link(model_name
 % - mart_R_T_M [4x4] double -  transformation from robot base_link to obj
 %--------------------------------------------------------------------------
 
+    %% Local variables
+    tf_listening_time   = 10;    % Time (secs) to listen for transformation in ros
+
     %% 1. Get Poses from matlab wrt to World
     disp('Setting the goal...');
 
-    % Robot's base_link pose wrt gazebo world origin
+    % Robot's base_link and model pose wrt gazebo world origin
     W_T_R = get_model_pose('robot');
-    
-    % Model Pose wrt World in Gazebo
     W_T_C = get_model_pose(model_name);
     
     %% 2. Get Goal|Current Pose wrt to base link in matlab format
-    % Convert model_pose to matlab formats 
-    mat_W_T_R = ros2matlabPose(robot_pose);
-    mat_W_T_M = ros2matlabPose(model_pose); % Frame at junction with table
+    mat_W_T_R = ros2matlabPose(W_T_R);
+    mat_W_T_M = ros2matlabPose(W_T_C); % Frame at junction with table
     
     % Change reference frame from gazebo world to robot's base_link
     mat_R_T_M = inv(mat_W_T_R)*mat_W_T_M; 
     
     %% 3. Modify orientation of robot pose to be  a top-down pick (see rviz gripper_tip_link vs base_link)
-    %mat_R_T_M(1:3,1:3) = rpy2r(0, pi/2, -pi);
+    mat_R_T_M(1:3,1:3) = rpy2r(0, pi/2, -pi);
     
     %  From orgnizers
-    T=eul2tform([pi/2 -pi 0]);
-    mat_R_T_M(1:3,1:3) = T(1:3,1:3);
+    % T=eul2tform([pi/2 -pi 0]);
+    % mat_R_T_M(1:3,1:3) = T(1:3,1:3);
     
     mat_R_T_M(3,4) = mat_R_T_M(3,4) + 0.2; % Offset along +z
     

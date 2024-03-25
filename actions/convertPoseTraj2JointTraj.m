@@ -48,7 +48,10 @@ function [mat_joint_traj,robot_joint_names] = convertPoseTraj2JointTraj(robot,ma
     % 5. Go through trajectory loop
     % Check for time complexity. Can we improve efficiency.
     for i = 1:num_traj_points
-        [des_q, solnInfo] = ik('tip',mat_traj(:,:,i),ikWeights,mat_cur_q); % Should we update initial guess with the latest q_traj value?
+        [des_q, ~] = ik('tool0',mat_traj(:,:,i),ikWeights,mat_cur_q); % Should we update initial guess with the latest q_traj value?
+
+        % Print soln for debugging purposes:
+        fprintf('IKs: '); fprintf('%.2f,', des_q);fprintf('\n')
         
         % 6. Set 1st row of des_q's to the 1st row of mat_joint_traj
         mat_joint_traj(i,:) = des_q(1,:);         %q_sz = size(des_q);
