@@ -29,7 +29,10 @@ function [mat_R_T_G, mat_R_T_M] = get_robot_object_pose_wrt_base_link(model_name
     
     % Change reference frame from gazebo world to robot's base_link
     mat_R_T_M = inv(mat_W_T_R)*mat_W_T_M; 
-    
+
+    canHeight = 0.2; % Can height is 20cm
+    mat_R_T_M(3,4) = mat_R_T_M(3,4) + canHeight; % Offset along +z to simulate knowing height of top of can.
+
     %% 3. Modify orientation of robot pose to be  a top-down pick (see rviz gripper_tip_link vs base_link)
     mat_R_T_M(1:3,1:3) = rpy2r(0, pi/2, -pi);
     
@@ -37,7 +40,7 @@ function [mat_R_T_G, mat_R_T_M] = get_robot_object_pose_wrt_base_link(model_name
     % T=eul2tform([pi/2 -pi 0]);
     % mat_R_T_M(1:3,1:3) = T(1:3,1:3);
     
-    mat_R_T_M(3,4) = mat_R_T_M(3,4) + 0.2; % Offset along +z
+    
     
     %% 4. Current Robot Pose in Cartesian Format:
     tftree = rostf('DataFormat','struct');     

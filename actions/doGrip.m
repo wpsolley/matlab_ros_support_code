@@ -20,7 +20,7 @@ function [grip_result_msg,grip_result_state] = doGrip(type)
     % Set Grip Pos by default to pick / close gripper
     gripPos = 0; 
 
-    % Modify it if place
+    % Modify it if place (i.e. open)
     if strcmp(type,'place')
         gripPos = 0.8;           
     end
