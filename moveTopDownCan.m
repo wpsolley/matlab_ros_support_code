@@ -1,4 +1,4 @@
-function moveTopDownCan
+%function [pose] = moveTopDownCan
 
 %Trajectory to position above rCan3 - initialization
 trajAct = rosactionclient('/pos_joint_traj_controller/follow_joint_trajectory',...
@@ -96,3 +96,6 @@ UR5econfig = [configSoln(3)...
               configSoln(6)]
 trajGoal = packTrajGoal(UR5econfig,trajGoal)
 sendGoal(trajAct,trajGoal)
+
+pose = [gripperY gripperX gripperZ -pi/2 pi 0]
+%end

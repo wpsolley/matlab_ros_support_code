@@ -1,4 +1,4 @@
-function [pose]=goToCan()
+%function [pose]=goToCan
 
 %Closing Gripper
 grip_client = rosactionclient('/gripper_controller/follow_joint_trajectory','control_msgs/FollowJointTrajectory');                            
@@ -53,4 +53,5 @@ trajGoal = packTrajGoal(UR5econfig, trajGoal);
 sendGoal(trajAct, trajGoal);
 
 pose=[0.799,-0.02,0.185,0,-pi,0]
+%end
 
