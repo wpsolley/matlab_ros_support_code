@@ -58,5 +58,7 @@ grip_client = rosactionclient('/gripper_controller/follow_joint_trajectory','con
 gripGoal    = rosmessage(grip_client)
 gripPos     = 0;
 gripGoal = packGripGoal(gripPos,gripGoal)
-sendGoalAndWait(grip_client,gripGoal)
+pause(1)
+sendGoal(grip_client,gripGoal)
+pause(1)
 end
