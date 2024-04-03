@@ -24,7 +24,7 @@ gripGoal    = rosmessage(grip_client);
 gripPos     = 0.0;
 gripGoal = packGripGoal(gripPos,gripGoal)
 sendGoal(grip_client,gripGoal)
-pause(1)
+
 
 
 %Robot initialization
@@ -33,20 +33,20 @@ jointStateMsg = jointSub.LatestMessage
 UR5e = loadrobot('universalUR5e', DataFormat="row")
 tform=UR5e.Bodies{3}.Joint.JointToParentTransform;    
 UR5e.Bodies{3}.Joint.setFixedTransform(tform*eul2tform([pi/2,0,0]));
-pause(1)
+
 tform=UR5e.Bodies{4}.Joint.JointToParentTransform;
 UR5e.Bodies{4}.Joint.setFixedTransform(tform*eul2tform([-pi/2,0,0]));
-pause(1)
+
 tform=UR5e.Bodies{7}.Joint.JointToParentTransform;
 UR5e.Bodies{7}.Joint.setFixedTransform(tform*eul2tform([-pi/2,0,0]));
-pause(1)
+
 %Inverse Kinematics solver
 ik = inverseKinematics("RigidBodyTree",UR5e); % Create Inverse kinematics solver
 ikWeights = [0.25 0.25 0.25 0.1 0.1 .1]; % configuration weights for IK solver [Translation Orientation] see documentation
-pause(1)
+
 jointStateMsg = receive(jointSub,3) % receive current robot configuration
 %IK Guesses
-pause(1)
+
 initialIKGuess = homeConfiguration(UR5e)
 jointStateMsg.Name
 initialIKGuess(1) = jointStateMsg.Position(4);  % Shoulder Pan
@@ -55,7 +55,7 @@ initialIKGuess(3) = jointStateMsg.Position(1);  % Elbow
 initialIKGuess(4) = jointStateMsg.Position(5);  % W1
 initialIKGuess(5) = jointStateMsg.Position(6);  % W2
 initialIKGuess(6) = jointStateMsg.Position(7);  % W3;
-pause(1)
+
 %Hovering End-Effector Pose
 gripperY = x;
 gripperX = y;
@@ -64,7 +64,7 @@ gripperTranslation = [gripperY gripperX gripperZ];
 gripperRotation    = [theta -pi 0]; %  [Z Y Z] radians
 tform = eul2tform(gripperRotation); % ie eul2tr call
 tform(1:3,4) = gripperTranslation'; % set translation in homogeneous transf
-pause(1)
+
 %Trajectory to position above rCan3 - implementation
 [configSoln, solnInfo] = ik('tool0',tform,ikWeights,initialIKGuess)
 UR5econfig = [configSoln(3)... 
@@ -91,7 +91,7 @@ initialIKGuess(3) = jointStateMsg.Position(1);  % Elbow
 initialIKGuess(4) = jointStateMsg.Position(5);  % W1
 initialIKGuess(5) = jointStateMsg.Position(6);  % W2
 initialIKGuess(6) = jointStateMsg.Position(7);  % W3;
-pause(1)
+
 %Lowered End-Effector Pose
 gripperY = x;
 gripperX = y;
@@ -111,14 +111,14 @@ UR5econfig = [configSoln(3)...
               configSoln(6)]
 trajGoal = packTrajGoal(UR5econfig,trajGoal)
 sendGoalAndWait(trajAct,trajGoal)
-pause(1)
+
 %Closing Gripper
 grip_client = rosactionclient('/gripper_controller/follow_joint_trajectory','control_msgs/FollowJointTrajectory');                            
 gripGoal    = rosmessage(grip_client)
 gripPos  = grip;
 gripGoal = packGripGoal(gripPos,gripGoal)
 sendGoalAndWait(grip_client,gripGoal)
-pause(1)
+
 %Lifted End-Effector Pose
 gripperY = x;
 gripperX = y;
@@ -137,7 +137,7 @@ UR5econfig = [configSoln(3)...
               configSoln(5)...
               configSoln(6)]
 trajGoal = packTrajGoal(UR5econfig,trajGoal)
-pause(1)
+
 sendGoal(trajAct,trajGoal)
-pause(1)
+
 end
