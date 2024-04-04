@@ -1,6 +1,6 @@
 function FixedPickups
 rosshutdown
-rosinit('10.51.57.138');
+rosinit('192.168.88.128');
 pause(2)
 goHome('qr')
 %Open End-Effector
@@ -10,7 +10,7 @@ gripPos     = 0;
 gripGoal = packGripGoal(gripPos,gripGoal)
 sendGoal(grip_client,gripGoal)
 resetWorld
-pause(1)
+%pause(1)
 
 
 %Item coordinates
@@ -18,14 +18,14 @@ pause(1)
 %gCan1 = [-0.363, -0.006, 0.235, pi/2, 0.22];
 
 % rCan3
-gripperY = -0.02
+gripperY = -0.02;
 gripperX = 0.799 ;
 gripperZ = 0.3732;
 pickFixedCan(gripperY, gripperX, gripperZ, pi/2, .515)
 greenDropOff
 
 % %Red can 1 vert
-pickFixedCan(-0.503, 0.395, 0.13, pi/2, 0.22)
+pickFixedCan(-0.503, 0.395, 0.13, pi/2, 0.225)
 greenDropOff
 pause(1)
 
@@ -57,8 +57,8 @@ gripperX = -0.07;
 gripperZ = 0.22
 pickFixedCan(gripperY, gripperX, gripperZ, -pi, .512)
 blueDropOff
-
-%Red can vert, high
+% 
+% %Red can vert, high
 gripperY = 0.667;
 gripperX = 0.023;
 gripperZ = 0.24;
@@ -85,7 +85,7 @@ gripperX = 0.46;
 gripperZ = 0.14;
 pickFixedCan(gripperY, gripperX, gripperZ, -pi, .225)
 greenDropOff
-
+% 
 %Yellow Can vert 1
 gripperY = -0.170194;
 gripperX = 0.699955;

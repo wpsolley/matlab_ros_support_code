@@ -10,7 +10,7 @@ grip_client = rosactionclient('/gripper_controller/follow_joint_trajectory', 'co
 gripGoal    = rosmessage(grip_client);
 gripPos     = 0.0;
 gripGoal = packGripGoal(gripPos,gripGoal)
-sendGoal(grip_client,gripGoal)
+sendGoalAndWait(grip_client,gripGoal)
 
 
 %Robot initialization
@@ -32,7 +32,7 @@ ikWeights = [0.25 0.25 0.25 0.1 0.1 .1]; % configuration weights for IK solver [
 
 jointStateMsg = receive(jointSub,3) % receive current robot configuration
 %IK Guesses
-initialIKGuess = homeConfiguration(UR5e)
+%initialIKGuess = [0 0 0 0 0 0]
 jointStateMsg.Name
 initialIKGuess(1) = jointStateMsg.Position(4);  % Shoulder Pan
 initialIKGuess(2) = jointStateMsg.Position(3);  % Shoulder Tilt
@@ -40,18 +40,23 @@ initialIKGuess(3) = jointStateMsg.Position(1);  % Elbow
 initialIKGuess(4) = jointStateMsg.Position(5);  % W1
 initialIKGuess(5) = jointStateMsg.Position(6);  % W2
 initialIKGuess(6) = jointStateMsg.Position(7);  % W3;
+fprintf("IKs: ");
+initialIKGuess
 
 %Hovering End-Effector Pose
-gripperY = -0.02
-gripperX = 0.799 ;
-gripperZ = 0.3732;
+gripperY = -0.170194;
+gripperX = 0.699955;
+gripperZ = 0.13;
 gripperTranslation = [gripperY gripperX gripperZ];
 gripperRotation    = [-pi/2 -pi 0]; %  [Z Y Z] radians
-tform = eul2tform(gripperRotation); % ie eul2tr call
+tform = eul2tform(gripperRotation) % ie eul2tr call
 tform(1:3,4) = gripperTranslation'; % set translation in homogeneous transf
 
 %Trajectory to position above rCan3 - implementation
 [configSoln, solnInfo] = ik('tool0',tform,ikWeights,initialIKGuess)
+% if (configSoln > [6.28 6.28 6.28 6.28 6.28 6.28])
+%     error("she broke");
+% end
 UR5econfig = [configSoln(3)... 
               configSoln(2)...
               configSoln(1)...
@@ -59,43 +64,43 @@ UR5econfig = [configSoln(3)...
               configSoln(5)...
               configSoln(6)]
 trajGoal = packTrajGoal(UR5econfig,trajGoal)
-sendGoal(trajAct,trajGoal)
+sendGoalAndWait(trajAct,trajGoal)
 
-%Introduce delay between steps
-pause('on');
-pause(5);
-
-%Moving down to can
-jointStateMsg = receive(jointSub,3) % receive current robot configuration
-%IK Guesses
-initialIKGuess = homeConfiguration(UR5e)
-jointStateMsg.Name
-initialIKGuess(1) = jointStateMsg.Position(4);  % Shoulder Pan
-initialIKGuess(2) = jointStateMsg.Position(3);  % Shoulder Tilt
-initialIKGuess(3) = jointStateMsg.Position(1);  % Elbow
-initialIKGuess(4) = jointStateMsg.Position(5);  % W1
-initialIKGuess(5) = jointStateMsg.Position(6);  % W2
-initialIKGuess(6) = jointStateMsg.Position(7);  % W3;
-
-%Lowered End-Effector Pose
-gripperY = -0.035
-gripperX = 0.799 ;
-gripperZ = 0.125;
-gripperTranslation = [gripperY gripperX gripperZ];
-gripperRotation    = [-pi/2 -pi 0]; %  [Z Y Z] radians
-tform = eul2tform(gripperRotation); % ie eul2tr call
-tform(1:3,4) = gripperTranslation'; % set translation in homogeneous transf
-
-%Trajectory to rCan3 - implementation
-[configSoln, solnInfo] = ik('tool0',tform,ikWeights,initialIKGuess)
-UR5econfig = [configSoln(3)... 
-              configSoln(2)...
-              configSoln(1)...
-              configSoln(4)...
-              configSoln(5)...
-              configSoln(6)]
-trajGoal = packTrajGoal(UR5econfig,trajGoal)
-sendGoal(trajAct,trajGoal)
-
-pose = [gripperY gripperX gripperZ -pi/2 pi 0]
-%end
+% %Introduce delay between steps
+% pause('on');
+% pause(5);
+% 
+% %Moving down to can
+% jointStateMsg = receive(jointSub,3) % receive current robot configuration
+% %IK Guesses
+% initialIKGuess = homeConfiguration(UR5e)
+% jointStateMsg.Name
+% initialIKGuess(1) = jointStateMsg.Position(4);  % Shoulder Pan
+% initialIKGuess(2) = jointStateMsg.Position(3);  % Shoulder Tilt
+% initialIKGuess(3) = jointStateMsg.Position(1);  % Elbow
+% initialIKGuess(4) = jointStateMsg.Position(5);  % W1
+% initialIKGuess(5) = jointStateMsg.Position(6);  % W2
+% initialIKGuess(6) = jointStateMsg.Position(7);  % W3;
+% 
+% %Lowered End-Effector Pose
+% gripperY = -0.035
+% gripperX = 0.799 ;
+% gripperZ = 0.125;
+% gripperTranslation = [gripperY gripperX gripperZ];
+% gripperRotation    = [-pi/2 -pi 0]; %  [Z Y Z] radians
+% tform = eul2tform(gripperRotation); % ie eul2tr call
+% tform(1:3,4) = gripperTranslation'; % set translation in homogeneous transf
+% 
+% %Trajectory to rCan3 - implementation
+% [configSoln, solnInfo] = ik('tool0',tform,ikWeights,initialIKGuess)
+% UR5econfig = [configSoln(3)... 
+%               configSoln(2)...
+%               configSoln(1)...
+%               configSoln(4)...
+%               configSoln(5)...
+%               configSoln(6)]
+% trajGoal = packTrajGoal(UR5econfig,trajGoal)
+% sendGoal(trajAct,trajGoal)
+% 
+% pose = [gripperY gripperX gripperZ -pi/2 pi 0]
+% %end
